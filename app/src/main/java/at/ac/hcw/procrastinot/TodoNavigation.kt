@@ -49,7 +49,7 @@ object TodoDestinationsArgs {
  * Destinations used in the [MainActivity]
  */
 object TodoDestinations {
-    const val TASKS_ROUTE = "$TASKS_SCREEN?$USER_MESSAGE_ARG={$USER_MESSAGE_ARG}"
+    const val TASKS_ROUTE = TASKS_SCREEN
     const val STATISTICS_ROUTE = STATISTICS_SCREEN
     const val TASK_DETAIL_ROUTE = "$TASK_DETAIL_SCREEN/{$TASK_ID_ARG}"
     const val ADD_EDIT_TASK_ROUTE = "$ADD_EDIT_TASK_SCREEN/{$TITLE_ARG}?$TASK_ID_ARG={$TASK_ID_ARG}"
@@ -62,17 +62,19 @@ class TodoNavigationActions(private val navController: NavHostController) {
 
     fun navigateToTasks(userMessage: Int = 0) {
         val navigatesFromDrawer = userMessage == 0
-        navController.navigate(
-            TASKS_SCREEN.let {
-                if (userMessage != 0) "$it?$USER_MESSAGE_ARG=$userMessage" else it
-            }
-        ) {
+        navController.navigate(TASKS_SCREEN) {
             popUpTo(navController.graph.findStartDestination().id) {
                 inclusive = !navigatesFromDrawer
                 saveState = navigatesFromDrawer
             }
             launchSingleTop = true
             restoreState = navigatesFromDrawer
+        }
+        // Pass the result via SavedStateHandle so it is consumed once and not re-fired on restoration
+        if (userMessage != 0) {
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set(USER_MESSAGE_ARG, userMessage)
         }
     }
 

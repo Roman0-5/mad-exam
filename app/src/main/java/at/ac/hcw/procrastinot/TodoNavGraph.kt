@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -62,16 +63,14 @@ fun TodoNavGraph(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        composable(
-            TodoDestinations.TASKS_ROUTE,
-            arguments = listOf(
-                navArgument(USER_MESSAGE_ARG) { type = NavType.IntType; defaultValue = 0 }
-            )
-        ) { entry ->
+        composable(TodoDestinations.TASKS_ROUTE) { entry ->
+            val userMessage by entry.savedStateHandle
+                .getStateFlow(USER_MESSAGE_ARG, 0)
+                .collectAsStateWithLifecycle()
             AppModalDrawer(drawerState, currentRoute, navActions) {
                 TasksScreen(
-                    userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
-                    onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
+                    userMessage = userMessage,
+                    onUserMessageDisplayed = { entry.savedStateHandle.set(USER_MESSAGE_ARG, 0) },
                     onAddTask = { navActions.navigateToAddEditTask(R.string.add_task, null) },
                     onTaskClick = { task -> navActions.navigateToTaskDetail(task.id) },
                     openDrawer = { coroutineScope.launch { drawerState.open() } }

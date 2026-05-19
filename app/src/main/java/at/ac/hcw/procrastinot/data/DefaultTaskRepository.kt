@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import at.ac.hcw.procrastinot.data.TaskPriority
+import at.ac.hcw.procrastinot.data.source.local.SeedData
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -152,9 +152,17 @@ class DefaultTaskRepository @Inject constructor(
      */
     override suspend fun refresh() {
         withContext(dispatcher) {
+            val localPriorities = localDataSource.getAll().associate { it.id to it.priority }
             val remoteTasks = networkDataSource.loadTasks()
             localDataSource.deleteAll()
-            localDataSource.upsertAll(remoteTasks.toLocal())
+            val restored = remoteTasks.toLocal().map { task ->
+                task.copy(priority = localPriorities[task.id] ?: TaskPriority.MEDIUM)
+            }
+            if (restored.isEmpty()) {
+                localDataSource.upsertAll(SeedData.initialTasks)
+            } else {
+                localDataSource.upsertAll(restored)
+            }
         }
     }
 

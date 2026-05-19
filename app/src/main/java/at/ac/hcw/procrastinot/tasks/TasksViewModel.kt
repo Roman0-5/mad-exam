@@ -92,6 +92,12 @@ class TasksViewModel @Inject constructor(
         }
     }
 
+    fun deleteTask(task: Task) = viewModelScope.launch {
+        Timber.d("deleteTask: id=%s", task.id)
+        taskRepository.deleteTask(task.id)
+        showSnackbarMessage(R.string.successfully_deleted_task_message)
+    }
+
     fun completeTask(task: Task, completed: Boolean) = viewModelScope.launch {
         Timber.d("completeTask: id=%s completed=%s", task.id, completed)
         taskRepository.completeTask(task.id, completed)

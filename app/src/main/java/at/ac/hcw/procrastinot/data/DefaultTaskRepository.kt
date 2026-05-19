@@ -167,16 +167,11 @@ class DefaultTaskRepository @Inject constructor(
      */
     private fun saveTasksToNetwork() {
         scope.launch {
-            try {
-                val localTasks = localDataSource.getAll()
-                val networkTasks = withContext(dispatcher) {
-                    localTasks.toNetwork()
-                }
-                networkDataSource.saveTasks(networkTasks)
-            } catch (e: Exception) {
-                // In a real app you'd handle the exception e.g. by exposing a `networkStatus` flow
-                // to an app level UI state holder which could then display a Toast message.
+            val localTasks = localDataSource.getAll()
+            val networkTasks = withContext(dispatcher) {
+                localTasks.toNetwork()
             }
+            networkDataSource.saveTasks(networkTasks)
         }
     }
 }

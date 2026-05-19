@@ -18,8 +18,11 @@ package at.ac.hcw.procrastinot.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import at.ac.hcw.procrastinot.data.DefaultTaskRepository
 import at.ac.hcw.procrastinot.data.TaskRepository
+import at.ac.hcw.procrastinot.data.source.local.SeedData
 import at.ac.hcw.procrastinot.data.source.local.TaskDao
 import at.ac.hcw.procrastinot.data.source.local.ToDoDatabase
 import at.ac.hcw.procrastinot.data.source.network.NetworkDataSource
@@ -30,6 +33,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 @Module
@@ -56,12 +61,27 @@ object DatabaseModule {
 
     @Singleton
     @Provides
-    fun provideDataBase(@ApplicationContext context: Context): ToDoDatabase {
-        return Room.databaseBuilder(
+    fun provideDataBase(
+        @ApplicationContext context: Context,
+        @ApplicationScope scope: CoroutineScope,
+    ): ToDoDatabase {
+        var db: ToDoDatabase? = null
+        db = Room.databaseBuilder(
             context.applicationContext,
             ToDoDatabase::class.java,
             "Tasks.db"
-        ).addMigrations(ToDoDatabase.MIGRATION_1_2).build()
+        )
+            .addMigrations(ToDoDatabase.MIGRATION_1_2)
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(database: SupportSQLiteDatabase) {
+                    super.onCreate(database)
+                    scope.launch {
+                        db!!.taskDao().upsertAll(SeedData.initialTasks)
+                    }
+                }
+            })
+            .build()
+        return db
     }
 
     @Provides

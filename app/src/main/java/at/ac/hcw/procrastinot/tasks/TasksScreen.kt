@@ -214,11 +214,13 @@ private fun TaskItem(
                 style = MaterialTheme.typography.headlineSmall,
                 textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null
             )
-            Text(
-                text = stringResource(R.string.priority_display, stringResource(task.priority.toStringRes())),
-                style = MaterialTheme.typography.bodySmall,
-                color = task.priority.toColor(),
-            )
+            if (task.priority != TaskPriority.MEDIUM) {
+                Text(
+                    text = stringResource(R.string.priority_display, stringResource(task.priority.toStringRes())),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = task.priority.toColor(),
+                )
+            }
         }
     }
 }

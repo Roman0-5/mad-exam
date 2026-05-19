@@ -43,6 +43,8 @@
     <string name="statistics_no_tasks">You have no tasks.</string>
     <string name="statistics_active_tasks">Active tasks: %.1f%%</string>
     <string name="statistics_completed_tasks">Completed tasks: %.1f%%</string>
+    <string name="statistics_active_tasks_label">Active Tasks</string>
+    <string name="statistics_completed_tasks_label">Completed Tasks</string>
     <string name="statistics_error">Error loading statistics.</string>
     <string name="no_data">No data</string>
     <string name="loading">LOADING</string>

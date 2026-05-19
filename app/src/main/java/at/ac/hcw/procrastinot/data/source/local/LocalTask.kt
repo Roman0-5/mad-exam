@@ -18,6 +18,7 @@ package at.ac.hcw.procrastinot.data.source.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import at.ac.hcw.procrastinot.data.TaskPriority
 
 /**
  * Internal model used to represent a task stored locally in a Room database. This is used inside
@@ -34,5 +35,6 @@ data class LocalTask(
     var title: String,
     var description: String,
     var isCompleted: Boolean,
+    var priority: TaskPriority = TaskPriority.MEDIUM,
 )
 

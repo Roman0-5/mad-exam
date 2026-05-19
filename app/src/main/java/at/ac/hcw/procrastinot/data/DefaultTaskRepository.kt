@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import at.ac.hcw.procrastinot.data.TaskPriority
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -48,15 +49,14 @@ class DefaultTaskRepository @Inject constructor(
     @ApplicationScope private val scope: CoroutineScope,
 ) : TaskRepository {
 
-    override suspend fun createTask(title: String, description: String): String {
-        // ID creation might be a complex operation so it's executed using the supplied
-        // coroutine dispatcher
+    override suspend fun createTask(title: String, description: String, priority: TaskPriority): String {
         val taskId = withContext(dispatcher) {
             UUID.randomUUID().toString()
         }
         val task = Task(
             title = title,
             description = description,
+            priority = priority,
             id = taskId,
         )
         localDataSource.upsert(task.toLocal())
@@ -64,10 +64,11 @@ class DefaultTaskRepository @Inject constructor(
         return taskId
     }
 
-    override suspend fun updateTask(taskId: String, title: String, description: String) {
+    override suspend fun updateTask(taskId: String, title: String, description: String, priority: TaskPriority) {
         val task = getTask(taskId)?.copy(
             title = title,
-            description = description
+            description = description,
+            priority = priority,
         ) ?: throw Exception("Task (id $taskId) not found")
 
         localDataSource.upsert(task.toLocal())

@@ -31,6 +31,7 @@ data class Task(
     val title: String = "",
     val description: String = "",
     val isCompleted: Boolean = false,
+    val priority: TaskPriority = TaskPriority.MEDIUM,
     val id: String,
 ) {
 

@@ -1,25 +1,11 @@
-/*
- * Copyright 2022 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package at.ac.hcw.procrastinot.addedittask
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,6 +15,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -55,7 +43,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.ac.hcw.procrastinot.R
+import at.ac.hcw.procrastinot.data.TaskPriority
 import at.ac.hcw.procrastinot.util.AddEditTaskTopAppBar
+import at.ac.hcw.procrastinot.util.toColor
 
 @Composable
 fun AddEditTaskScreen(
@@ -82,19 +72,19 @@ fun AddEditTaskScreen(
             loading = uiState.isLoading,
             title = uiState.title,
             description = uiState.description,
+            priority = uiState.priority,
             onTitleChanged = viewModel::updateTitle,
             onDescriptionChanged = viewModel::updateDescription,
+            onPriorityChanged = viewModel::updatePriority,
             modifier = Modifier.padding(paddingValues)
         )
 
-        // Check if the task is saved and call onTaskUpdate event
         LaunchedEffect(uiState.isTaskSaved) {
             if (uiState.isTaskSaved) {
                 onTaskUpdate()
             }
         }
 
-        // Check for user messages to display on the screen
         uiState.userMessage?.let { userMessage ->
             val snackbarText = stringResource(userMessage)
             LaunchedEffect(snackbarHostState, viewModel, userMessage, snackbarText) {
@@ -110,8 +100,10 @@ private fun AddEditTaskContent(
     loading: Boolean,
     title: String,
     description: String,
+    priority: TaskPriority,
     onTitleChanged: (String) -> Unit,
     onDescriptionChanged: (String) -> Unit,
+    onPriorityChanged: (TaskPriority) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
@@ -120,7 +112,7 @@ private fun AddEditTaskContent(
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             state = refreshingState,
-            onRefresh = { /* DO NOTHING */ },
+            onRefresh = { },
             content = { }
         )
     } else {
@@ -159,7 +151,46 @@ private fun AddEditTaskContent(
                     .fillMaxWidth(),
                 colors = textFieldColors
             )
+            PrioritySelector(
+                selected = priority,
+                onPriorityChanged = onPriorityChanged,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }
 
+@Composable
+private fun PrioritySelector(
+    selected: TaskPriority,
+    onPriorityChanged: (TaskPriority) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.priority_label),
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TaskPriority.entries.forEach { priority ->
+                val color = priority.toColor()
+                FilterChip(
+                    selected = selected == priority,
+                    onClick = { onPriorityChanged(priority) },
+                    label = { Text(stringResource(priority.toStringRes())) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = color.copy(alpha = 0.2f),
+                        selectedLabelColor = color,
+                    )
+                )
+            }
+        }
+    }
+}
+
+private fun TaskPriority.toStringRes(): Int = when (this) {
+    TaskPriority.HIGH -> R.string.priority_high
+    TaskPriority.MEDIUM -> R.string.priority_medium
+    TaskPriority.LOW -> R.string.priority_low
+}

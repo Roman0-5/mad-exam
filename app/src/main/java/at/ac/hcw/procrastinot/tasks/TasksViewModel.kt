@@ -1,19 +1,3 @@
-/*
- * Copyright 2019 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package at.ac.hcw.procrastinot.tasks
 
 import androidx.lifecycle.SavedStateHandle
@@ -24,10 +8,14 @@ import at.ac.hcw.procrastinot.DELETE_RESULT_OK
 import at.ac.hcw.procrastinot.EDIT_RESULT_OK
 import at.ac.hcw.procrastinot.R
 import at.ac.hcw.procrastinot.data.Task
+import at.ac.hcw.procrastinot.data.TaskPriority
 import at.ac.hcw.procrastinot.data.TaskRepository
 import at.ac.hcw.procrastinot.tasks.TasksFilterType.ACTIVE_TASKS
 import at.ac.hcw.procrastinot.tasks.TasksFilterType.ALL_TASKS
 import at.ac.hcw.procrastinot.tasks.TasksFilterType.COMPLETED_TASKS
+import at.ac.hcw.procrastinot.tasks.TasksFilterType.HIGH_PRIORITY
+import at.ac.hcw.procrastinot.tasks.TasksFilterType.LOW_PRIORITY
+import at.ac.hcw.procrastinot.tasks.TasksFilterType.MEDIUM_PRIORITY
 import at.ac.hcw.procrastinot.util.Async
 import at.ac.hcw.procrastinot.util.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,9 +30,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-/**
- * UiState for the task list screen.
- */
 data class TasksUiState(
     val items: List<Task> = emptyList(),
     val isLoading: Boolean = false,
@@ -52,14 +37,15 @@ data class TasksUiState(
     val userMessage: Int? = null
 )
 
-/**
- * ViewModel for the task list screen.
- */
 @HiltViewModel
 class TasksViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    init {
+        Timber.d("init")
+    }
 
     private val _savedFilterType =
         savedStateHandle.getStateFlow(TASKS_FILTER_SAVED_STATE_KEY, ALL_TASKS)
@@ -78,20 +64,14 @@ class TasksViewModel @Inject constructor(
         _filterUiInfo, _isLoading, _userMessage, _filteredTasksAsync
     ) { filterUiInfo, isLoading, userMessage, tasksAsync ->
         when (tasksAsync) {
-            Async.Loading -> {
-                TasksUiState(isLoading = true)
-            }
-            is Async.Error -> {
-                TasksUiState(userMessage = tasksAsync.errorMessage)
-            }
-            is Async.Success -> {
-                TasksUiState(
-                    items = tasksAsync.data,
-                    filteringUiInfo = filterUiInfo,
-                    isLoading = isLoading,
-                    userMessage = userMessage
-                )
-            }
+            Async.Loading -> TasksUiState(isLoading = true)
+            is Async.Error -> TasksUiState(userMessage = tasksAsync.errorMessage)
+            is Async.Success -> TasksUiState(
+                items = tasksAsync.data,
+                filteringUiInfo = filterUiInfo,
+                isLoading = isLoading,
+                userMessage = userMessage
+            )
         }
     }
         .stateIn(
@@ -148,16 +128,14 @@ class TasksViewModel @Inject constructor(
 
     private fun filterTasks(tasks: List<Task>, filteringType: TasksFilterType): List<Task> {
         val tasksToShow = ArrayList<Task>()
-        // We filter the tasks based on the requestType
         for (task in tasks) {
             when (filteringType) {
                 ALL_TASKS -> tasksToShow.add(task)
-                ACTIVE_TASKS -> if (task.isActive) {
-                    tasksToShow.add(task)
-                }
-                COMPLETED_TASKS -> if (task.isCompleted) {
-                    tasksToShow.add(task)
-                }
+                ACTIVE_TASKS -> if (task.isActive) tasksToShow.add(task)
+                COMPLETED_TASKS -> if (task.isCompleted) tasksToShow.add(task)
+                HIGH_PRIORITY -> if (task.priority == TaskPriority.HIGH) tasksToShow.add(task)
+                MEDIUM_PRIORITY -> if (task.priority == TaskPriority.MEDIUM) tasksToShow.add(task)
+                LOW_PRIORITY -> if (task.priority == TaskPriority.LOW) tasksToShow.add(task)
             }
         }
         return tasksToShow
@@ -165,28 +143,32 @@ class TasksViewModel @Inject constructor(
 
     private fun getFilterUiInfo(requestType: TasksFilterType): FilteringUiInfo =
         when (requestType) {
-            ALL_TASKS -> {
-                FilteringUiInfo(
-                    R.string.label_all, R.string.no_tasks_all,
-                    R.drawable.logo_no_fill
-                )
-            }
-            ACTIVE_TASKS -> {
-                FilteringUiInfo(
-                    R.string.label_active, R.string.no_tasks_active,
-                    R.drawable.ic_check_circle_96dp
-                )
-            }
-            COMPLETED_TASKS -> {
-                FilteringUiInfo(
-                    R.string.label_completed, R.string.no_tasks_completed,
-                    R.drawable.ic_verified_user_96dp
-                )
-            }
+            ALL_TASKS -> FilteringUiInfo(
+                R.string.label_all, R.string.no_tasks_all, R.drawable.logo_no_fill
+            )
+            ACTIVE_TASKS -> FilteringUiInfo(
+                R.string.label_active, R.string.no_tasks_active, R.drawable.ic_check_circle_96dp
+            )
+            COMPLETED_TASKS -> FilteringUiInfo(
+                R.string.label_completed, R.string.no_tasks_completed, R.drawable.ic_verified_user_96dp
+            )
+            HIGH_PRIORITY -> FilteringUiInfo(
+                R.string.label_high_priority, R.string.no_tasks_high_priority, R.drawable.ic_check_circle_96dp
+            )
+            MEDIUM_PRIORITY -> FilteringUiInfo(
+                R.string.label_medium_priority, R.string.no_tasks_medium_priority, R.drawable.ic_check_circle_96dp
+            )
+            LOW_PRIORITY -> FilteringUiInfo(
+                R.string.label_low_priority, R.string.no_tasks_low_priority, R.drawable.ic_check_circle_96dp
+            )
         }
+
+    override fun onCleared() {
+        super.onCleared()
+        Timber.d("onCleared")
+    }
 }
 
-// Used to save the current filtering in SavedStateHandle.
 const val TASKS_FILTER_SAVED_STATE_KEY = "TASKS_FILTER_SAVED_STATE_KEY"
 
 data class FilteringUiInfo(
@@ -194,4 +176,3 @@ data class FilteringUiInfo(
     val noTasksLabel: Int = R.string.no_tasks_all,
     val noTaskIconRes: Int = R.drawable.logo_no_fill,
 )
-

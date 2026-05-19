@@ -66,6 +66,22 @@
     <string name="successfully_added_task_message">Task added</string>
     <string name="no_data_description" />
 
+    <!-- Priority -->
+    <string name="priority_label">Priority</string>
+    <string name="priority_high">High</string>
+    <string name="priority_medium">Medium</string>
+    <string name="priority_low">Low</string>
+    <string name="nav_high_priority">High</string>
+    <string name="nav_medium_priority">Medium</string>
+    <string name="nav_low_priority">Low</string>
+    <string name="priority_display">Priority: %s</string>
+    <string name="label_high_priority">High Priority Tasks</string>
+    <string name="label_medium_priority">Medium Priority Tasks</string>
+    <string name="label_low_priority">Low Priority Tasks</string>
+    <string name="no_tasks_high_priority">No high priority tasks!</string>
+    <string name="no_tasks_medium_priority">No medium priority tasks!</string>
+    <string name="no_tasks_low_priority">No low priority tasks!</string>
+
     <!-- Content Descriptions -->
     <string name="tasks_header_image_content_description">Tasks header image</string>
     <string name="no_tasks_image_content_description">No tasks image</string>

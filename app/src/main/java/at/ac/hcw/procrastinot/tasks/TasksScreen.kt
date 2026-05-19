@@ -19,6 +19,7 @@ package at.ac.hcw.procrastinot.tasks
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -58,11 +59,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.ac.hcw.procrastinot.R
 import at.ac.hcw.procrastinot.TodoTheme
 import at.ac.hcw.procrastinot.data.Task
+import at.ac.hcw.procrastinot.data.TaskPriority
 import at.ac.hcw.procrastinot.tasks.TasksFilterType.ACTIVE_TASKS
 import at.ac.hcw.procrastinot.tasks.TasksFilterType.ALL_TASKS
 import at.ac.hcw.procrastinot.tasks.TasksFilterType.COMPLETED_TASKS
+import at.ac.hcw.procrastinot.tasks.TasksFilterType.HIGH_PRIORITY
+import at.ac.hcw.procrastinot.tasks.TasksFilterType.LOW_PRIORITY
+import at.ac.hcw.procrastinot.tasks.TasksFilterType.MEDIUM_PRIORITY
 import at.ac.hcw.procrastinot.util.LoadingContent
 import at.ac.hcw.procrastinot.util.TasksTopAppBar
+import at.ac.hcw.procrastinot.util.toColor
 
 @Composable
 fun TasksScreen(
@@ -85,6 +91,9 @@ fun TasksScreen(
                 onFilterAllTasks = { viewModel.setFiltering(ALL_TASKS) },
                 onFilterActiveTasks = { viewModel.setFiltering(ACTIVE_TASKS) },
                 onFilterCompletedTasks = { viewModel.setFiltering(COMPLETED_TASKS) },
+                onFilterHighPriority = { viewModel.setFiltering(HIGH_PRIORITY) },
+                onFilterMediumPriority = { viewModel.setFiltering(MEDIUM_PRIORITY) },
+                onFilterLowPriority = { viewModel.setFiltering(LOW_PRIORITY) },
                 onClearCompletedTasks = { viewModel.clearCompletedTasks() },
                 onRefresh = { viewModel.refresh() }
             )
@@ -183,6 +192,10 @@ private fun TaskItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .background(
+                if (task.priority != TaskPriority.MEDIUM) task.priority.toColor().copy(alpha = 0.1f)
+                else androidx.compose.ui.graphics.Color.Transparent
+            )
             .padding(
                 horizontal = dimensionResource(id = R.dimen.horizontal_margin),
                 vertical = dimensionResource(id = R.dimen.list_item_padding),
@@ -193,18 +206,20 @@ private fun TaskItem(
             checked = task.isCompleted,
             onCheckedChange = onCheckedChange
         )
-        Text(
-            text = task.titleForList,
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(
-                start = dimensionResource(id = R.dimen.horizontal_margin)
-            ),
-            textDecoration = if (task.isCompleted) {
-                TextDecoration.LineThrough
-            } else {
-                null
-            }
-        )
+        Column(
+            modifier = Modifier.padding(start = dimensionResource(id = R.dimen.horizontal_margin))
+        ) {
+            Text(
+                text = task.titleForList,
+                style = MaterialTheme.typography.headlineSmall,
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null
+            )
+            Text(
+                text = stringResource(R.string.priority_display, stringResource(task.priority.toStringRes())),
+                style = MaterialTheme.typography.bodySmall,
+                color = task.priority.toColor(),
+            )
+        }
     }
 }
 
@@ -347,3 +362,8 @@ private fun TaskItemCompletedPreview() {
     }
 }
 
+private fun TaskPriority.toStringRes(): Int = when (this) {
+    TaskPriority.HIGH -> R.string.priority_high
+    TaskPriority.MEDIUM -> R.string.priority_medium
+    TaskPriority.LOW -> R.string.priority_low
+}

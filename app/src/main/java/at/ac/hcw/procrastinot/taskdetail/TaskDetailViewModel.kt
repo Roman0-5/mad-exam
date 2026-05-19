@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -98,7 +99,13 @@ class TaskDetailViewModel @Inject constructor(
     }
 
     fun setCompleted(completed: Boolean) = viewModelScope.launch {
-        showSnackbarMessage(R.string.not_implemented)
+        Timber.d("setCompleted: taskId=%s completed=%s", taskId, completed)
+        taskRepository.completeTask(taskId, completed)
+        if (completed) {
+            showSnackbarMessage(R.string.task_marked_complete)
+        } else {
+            showSnackbarMessage(R.string.task_marked_active)
+        }
     }
 
     fun refresh() {

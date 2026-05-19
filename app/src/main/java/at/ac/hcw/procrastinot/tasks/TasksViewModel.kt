@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -112,7 +113,13 @@ class TasksViewModel @Inject constructor(
     }
 
     fun completeTask(task: Task, completed: Boolean) = viewModelScope.launch {
-        showSnackbarMessage(R.string.not_implemented)
+        Timber.d("completeTask: id=%s completed=%s", task.id, completed)
+        taskRepository.completeTask(task.id, completed)
+        if (completed) {
+            showSnackbarMessage(R.string.task_marked_complete)
+        } else {
+            showSnackbarMessage(R.string.task_marked_active)
+        }
     }
 
     fun showEditResultMessage(result: Int) {
